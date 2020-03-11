@@ -1,0 +1,113 @@
+#include "evictor.hh"
+#include "lru_evictor.hh"
+#include "fifo_evictor.hh"
+#include "cache.hh"
+#include <cassert>
+using namespace std;
+int return_number(key_type str){
+    size_t length = str.length();
+    return length;
+}
+function<size_t(key_type)> myhasher = return_number;  
+int main(){
+    auto cache = Cache(40, 0.75, nullptr, myhasher);
+    auto defaultedcache = Cache(32); 
+    Cache::size_type size;
+    Cache::val_type val1 = "value_1";
+    Cache::val_type val2 = "value_2alright";
+    Cache::val_type valr = "reject?";
+    assert(cache.space_used()==0);
+    cache.set("key1", val1, 8);
+    cache.set("key2", val2, 16);
+    cache.set("key3", valr, 8); //Maybe reject this.
+    assert(*cache.get("key1", size) == *val1);
+    assert(*cache.get("key2", size) == *val2);
+    assert(*cache.get("key3", size) == *valr);
+    cache.set("key2", val1, 8);
+    cache.set("key1", val2, 16);
+    assert(*cache.get("key2", size) == *val1);
+    assert(*cache.get("key1", size) == *val2);
+    defaultedcache.set("key1", "value_1", 8);
+    defaultedcache.set("key2", "value_2alright", 16);
+    defaultedcache.set("key3", "reject?", 8); 
+    defaultedcache.set("key2", "value_1", 8); 
+    defaultedcache.set("key1", "value_2alright", 16);
+    auto small_cache = Cache(50, 0.75);
+    size = 0;
+    cache.del("key1");
+    assert(cache.get("key1", size) == nullptr);
+    cache.del("key2");
+    assert(cache.get("key2", size) == nullptr);
+    cache.del("key3");
+    assert(cache.get("key3", size) == nullptr);
+    assert(cache.space_used() == 0);
+    cache.set("key1", "value_1", 8); 
+    cache.set("key2", "value_2alright", 16);
+    cache.set("key3", "reject?", 8);
+    assert(cache.space_used()!=0);
+    cache.reset();
+    assert(cache.get("key1", size) == nullptr);
+    assert(cache.get("key2", size) == nullptr);
+    assert(cache.get("key3", size) == nullptr);
+    assert(cache.space_used() == 0);
+    auto cache2 = Cache(100); 
+    assert(cache2.space_used() ==0); 
+    cache2.set("key1", "value_1", 8);
+    assert(cache2.space_used() == 8);
+    cache2.set("key2", "value_2alright", 16);
+    assert(cache2.space_used()  == 24);
+    cache2.set("key3", "value_3", 8);
+    assert(cache2.space_used() == 32);
+    Cache::size_type altsize = 0;
+    cache2.get("key1", altsize);
+    assert(altsize == 8);
+    cache2.get("key2", altsize);
+    assert(altsize == 16);
+    cache2.get("key3", altsize);
+    assert(altsize == 8);
+    assert(cache2.space_used() == 32);
+    cache2.set("key1", "aaretrecoiuaontoloigokonploikjtoriacestrigonta", 46); 
+    cache2.get("key1", altsize);
+    assert(altsize == 46);
+    assert(cache2.space_used() == 70);
+    cache2.set("key3", "waaay2lon", 11); 
+    cache2.get("key3", altsize);
+    assert(altsize == 11);
+    assert(cache2.space_used() == 73);
+    Cache::val_type valev1 = "abcdefghijklmnopqrstuvwxyz";
+    Cache::val_type valev2 = "I";
+    Cache::val_type valev3 = "thisisatest";
+    Cache::val_type valev4 = "object";
+    auto FIFO = Fifo_Evictor();
+    auto cache3 = Cache(30, 0.75, &FIFO);
+    cache3.set("key1", valev1, 27);
+    cache3.set("key2", valev2, 2); 
+    assert(*cache3.get("key1", altsize) == *valev1);
+    assert(*cache3.get("key2", altsize) == *valev2);
+    cache3.set("key3", valev3, 12);
+    assert(cache3.get("key1", altsize) == nullptr);
+    assert(*cache3.get("key2", altsize) == *valev2);
+    assert(*cache3.get("key3", altsize) == *valev3);
+    auto LRU  = LRU_Evictor();
+    auto cache4 = Cache(40, 0.75, &LRU);
+    cache4.set("key1", valev1, 27);
+    cache4.set("key2", valev2, 2); 
+    assert(*cache4.get("key2", altsize) == *valev2);
+    assert(*cache4.get("key1", altsize) == *valev1);
+    cache4.set("key4", valev4, 7); 
+    assert(cache4.space_used() == 36);
+    cache4.set("key3", valev3, 12);
+    assert(cache4.get("key1", altsize) == nullptr); 
+    assert(cache4.get("key2", altsize) == nullptr);
+    assert(*cache4.get("key3", altsize) == *valev3);
+    assert(*cache4.get("key4", altsize) == *valev4);
+    cache4.set("key5", valev1, 27); 
+    assert(cache4.get("key3", altsize) == nullptr); 
+    assert(*cache4.get("key5", altsize) == *valev1);
+    assert(*cache4.get("key4", altsize) == *valev4);
+    defaultedcache.reset();
+    cache2.reset();
+    cache3.reset();
+    cache4.reset();
+    return 0;
+}
