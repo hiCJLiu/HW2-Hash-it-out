@@ -1,4 +1,5 @@
-/*
+
+/* CJ Liu - 
  * Interface for a generic cache object.
  * Data is given as blobs (void *) of a given size, and indexed by a string key.
  */

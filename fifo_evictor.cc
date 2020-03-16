@@ -1,5 +1,5 @@
 #include "fifo_evictor.hh"
-// including the function fifo evictor
+//  including the function fifo evictor
 Fifo_Evictor::Fifo_Evictor(){
 
 }
@@ -13,7 +13,8 @@ const key_type Fifo_Evictor::evict(){
         values.pop();
         return lastkey;//returning values
     }
-    return values.front();
+    return "";
+//    return values.front();
 }
 
 

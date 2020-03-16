@@ -1,4 +1,4 @@
-
+// CJ Liu
 //defining the include function
 #include "lru_evictor.hh"
 
@@ -18,7 +18,8 @@ const key_type LRU_Evictor::evict(){
         return lastkey;
 // return last key
     }
-    return values.front();
+    return "";
+//    return values.front();
 }
 
 

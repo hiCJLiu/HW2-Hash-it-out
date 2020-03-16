@@ -5,7 +5,7 @@
 #include <vector>
 #include <tuple>
 #include <cassert>
-// defining the different variables used to write the code
+//   defining the different variables used to write the code
 using namespace std;
 using storage_unit = pair<Cache::val_type, Cache::size_type>;
 // defining the cache class
